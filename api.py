@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 import pandas as pd
-
-from sklearn.ensemble import RandomForestRegressor
+import joblib
 
 # ======================================
 # APP
@@ -10,39 +9,22 @@ from sklearn.ensemble import RandomForestRegressor
 app = FastAPI()
 
 # ======================================
-# DADOS
-# ======================================
-
-df = pd.read_csv("pizzas.csv")
-
-x = df[[
-    "diametro",
-    "ingredientes",
-    "borda"
-]]
-
-y = df["preco"]
-
-# ======================================
 # MODELO
 # ======================================
 
-modelo = RandomForestRegressor(
-    n_estimators=100,
-    random_state=42
+modelo = joblib.load(
+    "modelo_pizza.pkl"
 )
 
-modelo.fit(x, y)
-
 # ======================================
-# ROTA PRINCIPAL
+# HOME
 # ======================================
 
 @app.get("/")
 def home():
 
     return {
-        "mensagem": "🍕 Pizza AI API funcionando!"
+        "mensagem": "🍕 Pizza AI API"
     }
 
 # ======================================
@@ -62,8 +44,35 @@ def predict(
         "borda": [borda]
     })
 
-    preco = modelo.predict(nova_pizza)[0]
+    # ======================================
+    # FEATURES EXTRAS
+    # ======================================
+
+    nova_pizza["complexidade"] = (
+        nova_pizza["diametro"] *
+        nova_pizza["ingredientes"]
+    )
+
+    nova_pizza["premium"] = (
+        (
+            nova_pizza["diametro"] >= 30
+        ) &
+        (
+            nova_pizza["borda"] == 1
+        )
+    ).astype(int)
+
+    # ======================================
+    # PREVISÃO
+    # ======================================
+
+    preco = modelo.predict(
+        nova_pizza
+    )[0]
 
     return {
-        "preco_previsto": round(float(preco), 2)
+        "preco_previsto": round(
+            float(preco),
+            2
+        )
     }

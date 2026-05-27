@@ -6,7 +6,7 @@ import requests
 # ======================================
 
 st.set_page_config(
-    page_title="🍕 Pizza AI",
+    page_title=" Pizza AI",
     page_icon="🍕",
     layout="centered"
 )

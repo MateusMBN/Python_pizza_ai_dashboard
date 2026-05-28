@@ -149,12 +149,15 @@ if st.button("🤖 Fazer previsão"):
             st.session_state.historico.append({
 
                 "diametro": diametro,
+
                 "ingredientes": ingredientes,
+
                 "borda": (
                     "Sim"
                     if borda == 1
                     else "Não"
                 ),
+
                 "preco": preco
 
             })
@@ -171,9 +174,27 @@ if st.session_state.historico:
         "📊 Histórico de Previsões"
     )
 
+    # ======================================
+    # DATAFRAME
+    # ======================================
+
     df_historico = pd.DataFrame(
         st.session_state.historico
     )
+
+    # ======================================
+    # ÍNDICE COMEÇANDO EM 1
+    # ======================================
+
+    df_historico.index = (
+        df_historico.index + 1
+    )
+
+    df_historico.index.name = "Pedido"
+
+    # ======================================
+    # TABELA
+    # ======================================
 
     st.dataframe(
         df_historico,
@@ -204,7 +225,7 @@ if st.session_state.historico:
     )
 
     # ======================================
-    # GRÁFICO
+    # GRÁFICO DE LINHA
     # ======================================
 
     st.subheader(
@@ -216,7 +237,7 @@ if st.session_state.historico:
     )
 
     # ======================================
-    # GRÁFICO EXTRA
+    # GRÁFICO DISPERSÃO
     # ======================================
 
     st.subheader(

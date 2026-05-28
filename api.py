@@ -66,8 +66,9 @@ def predict(
     # PREVISÃO
     # ======================================
 
+    dados_para_previsao = nova_pizza[["diametro", "ingredientes", "borda"]]
     preco = modelo.predict(
-        nova_pizza
+        dados_para_previsao
     )[0]
 
     return {

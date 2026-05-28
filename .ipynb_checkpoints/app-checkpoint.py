@@ -62,27 +62,16 @@ if st.button("🤖 Fazer previsão"):
     )
 
     # Requisição
-    dados = None
-    try:
-        resposta = requests.get(url, timeout=10)
-        resposta.raise_for_status()
-        dados = resposta.json()
-    except requests.exceptions.RequestException as exc:
-        st.error(f"Erro ao chamar a API: {exc}")
-        st.write("Verifique se o FastAPI está rodando em http://127.0.0.1:8000")
-    except ValueError:
-        st.error(
-            "Resposta inválida da API. O servidor não retornou JSON válido."
-        )
-        st.write("Resposta bruta:", resposta.text)
+    resposta = requests.get(url)
 
-    if dados is not None:
-        preco = dados.get("preco_previsto")
-        if preco is None:
-            st.error("O campo 'preco_previsto' não foi retornado pelo endpoint.")
-            st.write("Dados retornados:", dados)
-        else:
-            st.success(
-                f"🍕 Preço previsto: R$ {preco}"
-            )
-            st.balloons()
+    # JSON
+    dados = resposta.json()
+
+    # Resultado
+    preco = dados["preco_previsto"]
+
+    st.success(
+        f"🍕 Preço previsto: R$ {preco}"
+    )
+
+    st.balloons()

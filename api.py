@@ -38,10 +38,16 @@ def predict(
     borda: int
 ):
 
+    # ======================================
+    # DATAFRAME
+    # ======================================
+
     nova_pizza = pd.DataFrame({
+
         "diametro": [diametro],
         "ingredientes": [ingredientes],
         "borda": [borda]
+
     })
 
     # ======================================
@@ -49,31 +55,41 @@ def predict(
     # ======================================
 
     nova_pizza["complexidade"] = (
+
         nova_pizza["diametro"] *
         nova_pizza["ingredientes"]
+
     )
 
     nova_pizza["premium"] = (
+
         (
             nova_pizza["diametro"] >= 30
         ) &
+
         (
             nova_pizza["borda"] == 1
         )
+
     ).astype(int)
 
     # ======================================
     # PREVISÃO
     # ======================================
 
-    dados_para_previsao = nova_pizza[["diametro", "ingredientes", "borda"]]
     preco = modelo.predict(
-        dados_para_previsao
+        nova_pizza
     )[0]
 
+    # ======================================
+    # RETORNO
+    # ======================================
+
     return {
+
         "preco_previsto": round(
             float(preco),
             2
         )
+
     }

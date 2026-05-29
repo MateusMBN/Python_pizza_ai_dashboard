@@ -68,7 +68,7 @@ if st.button("🤖 Fazer previsão"):
     # ======================================
 
     url = (
-        f"http://127.0.0.1:8000/predict"
+        f"https://python-pizza-ai-dashboard.onrender.com/predict"
         f"?diametro={diametro}"
         f"&ingredientes={ingredientes}"
         f"&borda={borda}"

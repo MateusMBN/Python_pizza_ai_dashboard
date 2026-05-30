@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # ======================================
-# CONFIG
+# CONFIGURAÇÃO DA PÁGINA
 # ======================================
 
 st.set_page_config(
@@ -20,171 +20,164 @@ if "historico" not in st.session_state:
     st.session_state.historico = []
 
 # ======================================
-# TÍTULO
+# CABEÇALHO
 # ======================================
 
-st.title("🍕 Pizza AI Dashboard")
+st.title("🍕 Pizza AI")
 
-st.markdown(
-    "Dashboard conectado com FastAPI 🤖"
+st.markdown("""
+### Descubra o preço estimado da sua pizza
+
+Nossa Inteligência Artificial analisa as características da pizza e estima um valor com base nos dados utilizados no treinamento do modelo.
+
+Preencha as informações abaixo e clique em **Calcular Preço**.
+""")
+
+st.info(
+    "💡 Exemplo: Pizza de 35 cm, 5 ingredientes e borda recheada."
 )
+
+st.divider()
 
 # ======================================
-# SIDEBAR
+# FORMULÁRIO
 # ======================================
 
-st.sidebar.title("⚙️ Configurações")
+st.subheader("📝 Monte sua pizza")
 
-diametro = st.sidebar.slider(
-    "🍕 Diâmetro",
-    20,
-    50,
-    35
-)
+col1, col2 = st.columns(2)
 
-ingredientes = st.sidebar.slider(
-    "🧀 Ingredientes",
-    1,
-    10,
-    5
-)
-
-borda = st.sidebar.selectbox(
-    "🥖 Borda recheada?",
-    [0, 1],
-    format_func=lambda x: (
-        "Sim" if x == 1 else "Não"
+with col1:
+    diametro = st.slider(
+        "📏 Tamanho da pizza (cm)",
+        min_value=20,
+        max_value=50,
+        value=35
     )
+
+with col2:
+    ingredientes = st.slider(
+        "🧀 Quantidade de ingredientes",
+        min_value=1,
+        max_value=10,
+        value=5
+    )
+
+borda = st.radio(
+    "🥖 Borda recheada?",
+    ["Não", "Sim"],
+    horizontal=True
 )
+
+borda_valor = 1 if borda == "Sim" else 0
+
+st.divider()
 
 # ======================================
 # BOTÃO
 # ======================================
 
-if st.button("🤖 Fazer previsão"):
+if st.button(
+    "🍕 Calcular Preço",
+    use_container_width=True
+):
 
-    # ======================================
-    # URL API
-    # ======================================
-
+    # URL DA API
     url = (
         f"https://python-pizza-ai-dashboard.onrender.com/predict"
         f"?diametro={diametro}"
         f"&ingredientes={ingredientes}"
-        f"&borda={borda}"
+        f"&borda={borda_valor}"
     )
-
-    # ======================================
-    # REQUEST
-    # ======================================
-
-    dados = None
 
     try:
 
-        resposta = requests.get(
-            url,
-            timeout=10
-        )
+        with st.spinner("🤖 Calculando preço da pizza..."):
 
-        resposta.raise_for_status()
-
-        dados = resposta.json()
-
-    except requests.exceptions.RequestException as exc:
-
-        st.error(
-            f"Erro ao chamar API: {exc}"
-        )
-
-        st.write(
-            "Verifique se o FastAPI está rodando."
-        )
-
-    except ValueError:
-
-        st.error(
-            "Resposta inválida da API."
-        )
-
-        st.write(
-            "Resposta recebida:",
-            resposta.text
-        )
-
-    # ======================================
-    # RESULTADO
-    # ======================================
-
-    if dados is not None:
-
-        preco = dados.get(
-            "preco_previsto"
-        )
-
-        if preco is None:
-
-            st.error(
-                "Campo 'preco_previsto' não encontrado."
+            resposta = requests.get(
+                url,
+                timeout=20
             )
 
-            st.write(dados)
+            resposta.raise_for_status()
 
-        else:
+            dados = resposta.json()
 
-            # ======================================
-            # SUCESSO
-            # ======================================
+            preco = dados["preco_previsto"]
 
-            st.success(
-                f"🍕 Preço previsto: R$ {preco}"
+        st.success("Previsão realizada com sucesso!")
+
+        # ======================================
+        # RESULTADO
+        # ======================================
+
+        st.metric(
+            label="💰 Preço estimado",
+            value=f"R$ {preco:.2f}"
+        )
+
+        st.divider()
+
+        # ======================================
+        # RESUMO
+        # ======================================
+
+        st.subheader("📋 Resumo da Pizza")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric(
+                "📏 Tamanho",
+                f"{diametro} cm"
             )
 
-            st.balloons()
+        with col2:
+            st.metric(
+                "🧀 Ingredientes",
+                ingredientes
+            )
 
-            # ======================================
-            # HISTÓRICO
-            # ======================================
+        with col3:
+            st.metric(
+                "🥖 Borda",
+                borda
+            )
 
-            st.session_state.historico.append({
+        # ======================================
+        # HISTÓRICO
+        # ======================================
 
-                "diametro": diametro,
+        st.session_state.historico.append({
+            "Tamanho (cm)": diametro,
+            "Ingredientes": ingredientes,
+            "Borda": borda,
+            "Preço (R$)": round(preco, 2)
+        })
 
-                "ingredientes": ingredientes,
+        st.balloons()
 
-                "borda": (
-                    "Sim"
-                    if borda == 1
-                    else "Não"
-                ),
+    except requests.exceptions.RequestException as erro:
 
-                "preco": preco
+        st.error(
+            "❌ Não foi possível conectar à API."
+        )
 
-            })
+        st.write(erro)
 
 # ======================================
-# DASHBOARD
+# HISTÓRICO DE CONSULTAS
 # ======================================
 
-if st.session_state.historico:
+if len(st.session_state.historico) > 0:
 
     st.divider()
 
-    st.subheader(
-        "📊 Histórico de Previsões"
-    )
-
-    # ======================================
-    # DATAFRAME
-    # ======================================
+    st.subheader("📊 Histórico de Simulações")
 
     df_historico = pd.DataFrame(
         st.session_state.historico
     )
-
-    # ======================================
-    # ÍNDICE COMEÇANDO EM 1
-    # ======================================
 
     df_historico.index = (
         df_historico.index + 1
@@ -192,60 +185,11 @@ if st.session_state.historico:
 
     df_historico.index.name = "Pedido"
 
-    # ======================================
-    # TABELA
-    # ======================================
-
     st.dataframe(
         df_historico,
         use_container_width=True
     )
 
-    # ======================================
-    # MÉTRICAS
-    # ======================================
-
-    st.subheader("📈 Métricas")
-
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric(
-        "🍕 Preço Médio",
-        f'R$ {round(df_historico["preco"].mean(), 2)}'
-    )
-
-    col2.metric(
-        "📈 Maior Preço",
-        f'R$ {round(df_historico["preco"].max(), 2)}'
-    )
-
-    col3.metric(
-        "📉 Menor Preço",
-        f'R$ {round(df_historico["preco"].min(), 2)}'
-    )
-
-    # ======================================
-    # GRÁFICO DE LINHA
-    # ======================================
-
-    st.subheader(
-        "📈 Evolução dos Preços"
-    )
-
-    st.line_chart(
-        df_historico["preco"]
-    )
-
-    # ======================================
-    # GRÁFICO DISPERSÃO
-    # ======================================
-
-    st.subheader(
-        "🧀 Ingredientes x Preço"
-    )
-
-    st.scatter_chart(
-        data=df_historico,
-        x="ingredientes",
-        y="preco"
+    st.caption(
+        f"Total de simulações: {len(df_historico)}"
     )
